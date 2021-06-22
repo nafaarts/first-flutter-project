@@ -1,15 +1,57 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:kbpna_inventory/detail.dart';
+import 'package:http/http.dart' as http;
 
 class edit extends StatefulWidget {
-  const edit({Key? key}) : super(key: key);
+  final String code;
+  final String kondisi;
+  final String nama_barang;
+  final String gambar;
+  const edit(
+      {Key? key,
+      required this.code,
+      required this.kondisi,
+      required this.gambar,
+      required this.nama_barang})
+      : super(key: key);
 
   @override
-  _editState createState() => _editState();
+  _editState createState() => _editState(code, kondisi, nama_barang, gambar);
 }
 
 class _editState extends State<edit> {
   String dropdownValue = "BAGUS";
+  String code = "null";
+  String nama_barang = "null";
+  String gambar = "null";
+
+  _editState(String code, String kondisi, String nama_barang, String gambar) {
+    this.dropdownValue = kondisi.toUpperCase();
+    this.code = code;
+    this.nama_barang = nama_barang;
+    this.gambar = gambar;
+  }
+
+  final securityCode = TextEditingController();
+
+  Future editDataFromAPI(String code, String kondisi, String security) async {
+    var url = Uri.parse('https://isan.nafaarts.com/update.php');
+    var response = await http.post(url, body: {
+      'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+      'code': code,
+      'kondisi': kondisi,
+      'security': security
+    });
+    var responseData = jsonDecode(response.body);
+
+    if (responseData['response'] == 200) {
+      showAlertDialog(context, code, Colors.amberAccent, responseData['msg']);
+    } else {
+      showAlertDialog(context, code, Colors.red.shade300, responseData['msg']);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +76,7 @@ class _editState extends State<edit> {
             padding: EdgeInsets.fromLTRB(40.0, 0.0, 40.0, 0.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
-              child: Image(
-                  image: NetworkImage(
-                      'https://m.ayojakarta.com/images-jakarta/post/articles/2019/07/23/2548/ruko.jpg')),
+              child: Image(image: NetworkImage(gambar)),
             ),
           ),
           Divider(height: 30.0),
@@ -53,7 +93,7 @@ class _editState extends State<edit> {
                 ),
                 SizedBox(height: 10.0),
                 Text(
-                  "RUKO SEWA",
+                  nama_barang,
                   style: TextStyle(color: Colors.amberAccent, fontSize: 20.0),
                 ),
                 SizedBox(height: 30.0),
@@ -99,6 +139,7 @@ class _editState extends State<edit> {
                 ),
                 SizedBox(height: 10.0),
                 TextField(
+                  controller: securityCode,
                   style: TextStyle(
                     fontSize: 18.0,
                     color: Colors.amberAccent,
@@ -146,7 +187,9 @@ class _editState extends State<edit> {
                 ),
                 FlatButton(
                   onPressed: () {
-                    showAlertDialog(context);
+                    String security = securityCode.text;
+                    editDataFromAPI(code, dropdownValue, security);
+                    // showAlertDialog(context);
                   },
                   color: Colors.amberAccent,
                   child: Row(
@@ -168,32 +211,41 @@ class _editState extends State<edit> {
   }
 }
 
-showAlertDialog(BuildContext context) {
+showAlertDialog(
+    BuildContext context, String code, Color warna, String message) {
   // Create button
   Widget okButton = FlatButton(
     child: Text("OK"),
-    onPressed: () {
-      // Navigator.push(
-      // context,
-      // MaterialPageRoute(
-      //     builder: (context) => detail(
-      //           gambar: "null",
-      //           qrresult: "null",
-      //         )));
+    onPressed: () async {
+      var url =
+          Uri.https('isan.nafaarts.com', '/inventaris.php', {'kode': code});
+      try {
+        var response = await http.get(url);
+        var data = jsonDecode(response.body);
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => detail(
+                      data: data,
+                      code: code,
+                    )));
+      } catch (error) {
+        print('WTF');
+      }
     },
   );
 
   // Create AlertDialog
   AlertDialog alert = AlertDialog(
-    backgroundColor: Colors.amberAccent,
+    backgroundColor: warna,
     title: Icon(
-      Icons.check,
+      Icons.message,
       size: 50.0,
     ),
     content: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Center(child: Text("Data Berhasil Diubah!")),
+        Center(child: Text(message)),
       ],
     ),
     actions: [

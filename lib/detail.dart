@@ -4,7 +4,9 @@ import 'edit.dart';
 
 class detail extends StatelessWidget {
   final data;
-  const detail({Key? key, @required this.data}) : super(key: key);
+  final String code;
+  const detail({Key? key, @required this.data, required this.code})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,7 @@ class detail extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(40.0, 0.0, 40.0, 0.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
-              child: Image(image: NetworkImage(data['url'])),
+              child: Image(image: NetworkImage(data['gambar'])),
             ),
           ),
           Divider(
@@ -53,7 +55,7 @@ class detail extends StatelessWidget {
                           ),
                           SizedBox(height: 10.0),
                           Text(
-                            "RUKO SEWA",
+                            data['nama_barang'],
                             style: TextStyle(
                                 color: Colors.amberAccent, fontSize: 20.0),
                           ),
@@ -66,7 +68,7 @@ class detail extends StatelessWidget {
                           ),
                           SizedBox(height: 10.0),
                           Text(
-                            "HIBAH BRR",
+                            data['asal_perolehan'],
                             style: TextStyle(
                                 color: Colors.amberAccent, fontSize: 20.0),
                           ),
@@ -79,7 +81,7 @@ class detail extends StatelessWidget {
                           ),
                           SizedBox(height: 10.0),
                           Text(
-                            "2012-07-20",
+                            data['tgl_peroleh'],
                             style: TextStyle(
                                 color: Colors.amberAccent, fontSize: 20.0),
                           ),
@@ -92,7 +94,7 @@ class detail extends StatelessWidget {
                           ),
                           SizedBox(height: 10.0),
                           Text(
-                            "Rp 198.500.000",
+                            data['rupiah_aset'],
                             style: TextStyle(
                                 color: Colors.amberAccent, fontSize: 20.0),
                           ),
@@ -116,7 +118,7 @@ class detail extends StatelessWidget {
                             ),
                             SizedBox(height: 10.0),
                             Text(
-                              "-",
+                              data['tempat_aset'],
                               style: TextStyle(
                                   color: Colors.amberAccent, fontSize: 20.0),
                             ),
@@ -129,7 +131,7 @@ class detail extends StatelessWidget {
                             ),
                             SizedBox(height: 10.0),
                             Text(
-                              "-",
+                              data['merk_barang'],
                               style: TextStyle(
                                   color: Colors.amberAccent, fontSize: 20.0),
                             ),
@@ -142,7 +144,7 @@ class detail extends StatelessWidget {
                             ),
                             SizedBox(height: 10.0),
                             Text(
-                              "BAGUS",
+                              data['kondisi'],
                               style: TextStyle(
                                   color: Colors.amberAccent, fontSize: 20.0),
                             ),
@@ -183,7 +185,14 @@ class detail extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => edit()),
+                      MaterialPageRoute(
+                        builder: (context) => edit(
+                          code: code,
+                          kondisi: data['kondisi'],
+                          gambar: data['gambar'],
+                          nama_barang: data['nama_barang'],
+                        ),
+                      ),
                     );
                   },
                   color: Colors.amberAccent,

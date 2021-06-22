@@ -1,11 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'detail.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
-import 'dart:convert' as convert;
+import 'detail.dart';
+import 'edit.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
@@ -29,36 +28,58 @@ class MyApp extends StatelessWidget {
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
-
   @override
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  Future<void> scanQR() async {
+  String _scanBarcode = 'Unknown';
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<String> scanQR() async {
     String barcodeScanRes;
+
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           "#ff6666", "Cancel", true, ScanMode.QR);
 
-      var myURL = Uri.https('jsonplaceholder.typicode.com', '/photos/1');
-      var req = await http.get(myURL);
-
-      var data;
-
+      print("hasil scan : $barcodeScanRes");
       setState(() {
-        data = json.decode(req.body);
+        _scanBarcode = barcodeScanRes;
       });
-
-      if (barcodeScanRes != null) {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => detail(data: data)));
-      }
-    } on Exception {
-      barcodeScanRes = "Something error";
+    } on PlatformException {
+      barcodeScanRes = "Something error with scanner";
     }
 
-    if (!mounted) return;
+    var url = Uri.https(
+        'isan.nafaarts.com', '/inventaris.php', {'kode': barcodeScanRes});
+    try {
+      var response = await http.get(url);
+      var data = jsonDecode(response.body);
+
+      if (data == null) {
+        if (barcodeScanRes != "-1") {
+          showAlertDialog(
+              context, "Tidak ada data diterima dari $barcodeScanRes");
+        }
+      } else {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => detail(
+                      data: data,
+                      code: barcodeScanRes,
+                    )));
+      }
+    } catch (error) {
+      print('WTF');
+    }
+
+    return barcodeScanRes;
   }
 
   @override
@@ -138,4 +159,45 @@ class _HomeState extends State<Home> {
       ),
     );
   }
+}
+
+showAlertDialog(BuildContext context, String message) {
+  Widget okButton = FlatButton(
+    child: Text(
+      "back",
+      style: TextStyle(color: Colors.white),
+    ),
+    onPressed: () {
+      Navigator.pop(context);
+    },
+  );
+  // Create AlertDialog
+  AlertDialog alert = AlertDialog(
+    backgroundColor: Colors.redAccent,
+    title: Icon(
+      Icons.error,
+      size: 50.0,
+      color: Colors.white,
+    ),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Center(
+            child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white),
+        )),
+      ],
+    ),
+    actions: [okButton],
+  );
+
+  // show the dialog
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
 }
